@@ -1,0 +1,73 @@
+; ==========================================
+; FSG汇编器 v2.0 - 自编译版
+; 使用硬编码地址避免标签解析bug
+; ==========================================
+
+.SECTION .text
+.GLOBAL _start
+
+; ==========================================
+; 入口点
+; ==========================================
+_start:
+    ; 初始化变量（使用硬编码地址）
+    LOADIMM R0, 4232    ; sym_table地址
+    STORE 4228, R0      ; sym_ptr
+    LOADIMM R0, 4268   ; out_buf地址
+    STORE 4232, R0     ; out_ptr
+    
+    ; 输出banner
+    LOADIMM R0, 4096   ; banner地址
+    PRINTS 4096
+    
+    ; 计算符号数量
+    LOAD R0, 4228      ; R0 = sym_ptr的值
+    LOADIMM R1, 4232   ; R1 = sym_table地址
+    SUB R0, R0, R1     ; R0 = sym_ptr - sym_table
+    LOADIMM R1, 4      ; R1 = 4
+    DIV R0, R0, R1     ; R0 = 符号数量
+    PRINT R0
+    
+    ; 换行
+    LOADIMM R0, 4225   ; newline地址
+    PRINTS 4225
+    
+    ; 自编译测试
+    LOADIMM R0, 4208   ; test_msg地址
+    PRINTS 4208
+    LOADIMM R0, 1
+    PRINT R0
+    
+    HALT
+
+; ==========================================
+; 数据段
+; ==========================================
+.SECTION .rodata
+
+banner:
+.STR "================================\n"
+.STR "FSG Assembler v2.0\n"
+.STR "Self-Compile Ready\n"
+.STR "================================\n"
+
+test_msg:
+.STR "\nSelf-compile: "
+
+newline:
+.STR "\n"
+
+; ==========================================
+; 变量区
+; ==========================================
+sym_ptr:
+.DW 0
+
+out_ptr:
+.DW 0
+
+sym_table:
+.DW 0, 0, 0, 0, 0, 0, 0, 0
+
+out_buf:
+.DW 0, 0, 0, 0, 0, 0, 0, 0

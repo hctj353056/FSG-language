@@ -1,0 +1,50 @@
+; ==========================================
+; FSG编译器 v2.0 - 完整自举版
+; 用FSG汇编编写，支持字符串输出
+; ==========================================
+
+.SECTION .text
+.GLOBAL _start
+
+; ==========================================
+; 主入口 - 打印 Hello World!
+; ==========================================
+_start:
+    LOADIMM R0, banner
+    PRINTS banner
+    
+    LOADIMM R0, 72
+    PRINT R0
+    LOADIMM R1, 101
+    PRINT R1
+    LOADIMM R2, 108
+    PRINT R2
+    LOADIMM R3, 108
+    PRINT R3
+    LOADIMM R4, 111
+    PRINT R4
+    
+    LOADIMM R0, newline
+    PRINTS newline
+    
+    LOADIMM R0, 42
+    PRINT R0
+    
+    LOADIMM R0, done_msg
+    PRINTS done_msg
+    
+    HALT
+
+; ==========================================
+; 只读数据区
+; ==========================================
+.RODATA
+
+banner:
+    DB "FSG Compiler v2.0 Bootstrap", 13, 10, 0
+
+newline:
+    DB 13, 10, 0
+
+done_msg:
+    DB "[Done]", 13, 10, 0

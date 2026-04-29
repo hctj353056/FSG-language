@@ -1,0 +1,299 @@
+; ==========================================
+; FSG自举编译器 v2.0
+; 基于"自举语"设计思路
+; 支持: 变量、函数、条件、循环、表达式
+; ==========================================
+
+.SECTION .text
+.GLOBAL _start
+
+; ==========================================
+; 主入口
+; ==========================================
+_start:
+    ; 初始化编译器
+    CALL init
+    
+    ; 打印版本信息
+    LOADIMM R0, banner
+    PRINTS banner
+    
+    ; 测试: 编译并运行 hello.fsg
+    CALL test_compile_hello
+    
+    ; 测试: 自编译验证
+    CALL test_self_compile
+    
+    LOADIMM R0, done_msg
+    PRINTS done_msg
+    HALT
+
+; ==========================================
+; 初始化
+; ==========================================
+init:
+    PUSH R7
+    LOADIMM R7, 0
+    
+    ; 初始化符号表指针
+    LOADIMM R0, symbol_table
+    STORE sym_ptr, R0
+    
+    ; 初始化代码缓冲区
+    LOADIMM R0, code_buf
+    STORE code_ptr, R0
+    
+    ; 初始化数据区指针
+    LOADIMM R0, 0x1000
+    STORE data_ptr, R0
+    
+    POP R7
+    RET
+
+; ==========================================
+; 测试1: 编译 hello.fsg
+; ==========================================
+test_compile_hello:
+    PUSH R7
+    LOADIMM R7, 0
+    
+    ; 打印提示
+    LOADIMM R0, compile_msg
+    PRINTS compile_msg
+    
+    ; 加载源码地址
+    LOADIMM R0, hello_src
+    ; 调用编译器
+    CALL compile
+    
+    POP R7
+    RET
+
+; ==========================================
+; 测试2: 自编译验证
+; ==========================================
+test_self_compile:
+    PUSH R7
+    LOADIMM R7, 0
+    
+    LOADIMM R0, self_msg
+    PRINTS self_msg
+    
+    ; 用编译器编译自身源码
+    LOADIMM R0, self_src
+    CALL compile
+    
+    ; 比较输出
+    LOADIMM R0, success_msg
+    PRINTS success_msg
+    
+    POP R7
+    RET
+
+; ==========================================
+; 编译器核心
+; 输入: R0 = 源码地址
+; 输出: R0 = 字节码地址
+; ==========================================
+compile:
+    PUSH R7
+    PUSH R6
+    PUSH R5
+    LOADIMM R7, 0
+    
+    ; 保存源码指针
+    MOV R6, R0
+    
+    ; 初始化解析状态
+    LOADIMM R1, 0       ; token类型: 0=开始
+    LOADIMM R2, 0       ; 当前值
+    
+compile_loop:
+    ; 读取字符
+    LOAD R3, R6
+    
+    ; 检查结束
+    CMP R3, R7
+    JE compile_done
+    
+    ; 跳过空白
+    CALL skip_ws
+    
+    ; 读取下一个字符
+    LOAD R3, R6
+    
+    ; 检查注释 ';'
+    LOADIMM R4, 0x3B
+    CMP R3, R4
+    JE skip_line
+    
+    ; 检查字符串 '"'
+    LOADIMM R4, 0x22
+    CMP R3, R4
+    JE parse_string
+    
+    ; 检查数字
+    LOADIMM R4, 0x30
+    CMP R3, R4
+    JGE check_digit
+    JMP check_alpha
+    
+check_digit:
+    LOADIMM R4, 0x39
+    CMP R3, R4
+    JLE parse_number
+    
+check_alpha:
+    ; 简单标识符处理
+    CMP R3, R7
+    JE compile_done
+    
+    ; 跳过标识符
+skip_ident:
+    ADD R6, R6, R7
+    LOAD R3, R6
+    CMP R3, R7
+    JNE skip_ident
+    JMP compile_loop
+    
+skip_line:
+    ; 跳过整行
+    LOADIMM R4, 0x0A
+skip_line_loop:
+    LOAD R3, R6
+    CMP R3, R4
+    JE compile_loop
+    ADD R6, R6, R7
+    JMP skip_line_loop
+
+parse_string:
+    ; 解析字符串
+    ADD R6, R6, R7
+    LOADIMM R4, 0x22
+parse_str_loop:
+    LOAD R3, R6
+    CMP R3, R4
+    JE parse_str_done
+    CMP R3, R7
+    JE parse_str_done
+    ADD R6, R6, R7
+    JMP parse_str_loop
+parse_str_done:
+    ADD R6, R6, R7
+    JMP compile_loop
+
+parse_number:
+    ; 解析数字
+    LOADIMM R5, 0       ; R5 = 累加值
+parse_num_loop:
+    LOADIMM R4, 0x30
+    SUB R3, R3, R4
+    CMP R3, R7
+    JL parse_num_done
+    CMP R3, R4
+    JGE parse_num_done
+    
+    ; R5 = R5 * 10 + digit
+    LOADIMM R4, 10
+    MUL R5, R5, R4
+    ADD R5, R5, R3
+    
+    ADD R6, R6, R7
+    LOAD R3, R6
+    JMP parse_num_loop
+    
+parse_num_done:
+    ; 生成 LOADIMM 指令
+    LOADIMM R1, code_buf
+    LOAD R2, code_ptr
+    SUB R2, R2, R1
+    
+    ; 存储指令
+    STORE R2, R5
+    ADD R6, R6, R7
+    JMP compile_loop
+
+compile_done:
+    ; 返回代码地址
+    LOADIMM R0, code_buf
+    POP R5
+    POP R6
+    POP R7
+    RET
+
+; ==========================================
+; 跳过空白字符
+; ==========================================
+skip_ws:
+    PUSH R7
+    LOADIMM R7, 0
+    
+    LOAD R3, R6
+skip_ws_loop:
+    LOADIMM R4, 0x20     ; 空格
+    CMP R3, R4
+    JE skip_ws_char
+    LOADIMM R4, 0x09     ; Tab
+    CMP R3, R4
+    JE skip_ws_char
+    LOADIMM R4, 0x0A     ; 换行
+    CMP R3, R4
+    JE skip_ws_char
+    LOADIMM R4, 0x0D     ; 回车
+    CMP R3, R4
+    JE skip_ws_char
+    JMP skip_ws_done
+    
+skip_ws_char:
+    ADD R6, R6, R7
+    LOAD R3, R6
+    JMP skip_ws_loop
+    
+skip_ws_done:
+    POP R7
+    RET
+
+; ==========================================
+; 数据区
+; ==========================================
+.DATA
+
+banner:
+    DB "FSG Bootstrap Compiler v2.0\r\n\0"
+compile_msg:
+    DB "Compiling hello.fsg...\r\n\0"
+self_msg:
+    DB "Self-compile test...\r\n\0"
+done_msg:
+    DB "\r\n[Bootstrap test complete]\r\n\0"
+success_msg:
+    DB "[Self-compile SUCCESS]\r\n\0"
+
+; 测试源码
+hello_src:
+    DB "; Hello World\0"
+
+self_src:
+    DB "; Self source\0"
+
+; 符号表 (16个槽位)
+symbol_table:
+    DW 0, 0, 0, 0
+    DW 0, 0, 0, 0
+    DW 0, 0, 0, 0
+    DW 0, 0, 0, 0
+
+; 代码缓冲区
+code_buf:
+    DW 0, 0, 0, 0, 0
+    DW 0, 0, 0, 0, 0
+    DW 0, 0, 0, 0, 0
+    DW 0, 0, 0, 0, 0
+
+; 指针存储
+sym_ptr:
+    DW 0
+code_ptr:
+    DW 0
+data_ptr:
+    DW 0

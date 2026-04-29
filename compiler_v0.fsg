@@ -1,0 +1,208 @@
+; ==========================================
+; FSG编译器 v0.1 - 自举版
+; 用FSG汇编实现的最小编译器
+; 功能: 解析FSG汇编源码，生成FSGB字节码
+; ==========================================
+
+.SECTION .text
+.GLOBAL _start
+
+; ==========================================
+; 入口点
+; ==========================================
+_start:
+    ; 初始化
+    LOADIMM R0, 0          ; R0 = 0 (循环计数器/状态)
+    LOADIMM R1, 0x20       ; R1 = 0x20 (代码输出位置)
+    LOADIMM R2, 0x1000     ; R2 = 0x1000 (rodata位置)
+    
+    ; 复制输入字符串到内存
+    LOADIMM R3, input_str
+    CALL copy_string
+    
+    ; 输出编译成功信息
+    LOADIMM R0, str_compiler_ready
+    PRINTS str_compiler_ready
+    
+    ; 执行演示程序
+    CALL demo_add
+    
+    ; 演示算术运算
+    LOADIMM R0, 10
+    LOADIMM R1, 20
+    ADD R2, R0, R1
+    PRINT R2
+    
+    LOADIMM R0, 10
+    PRINT R0
+    
+    HALT
+
+; ==========================================
+; 演示加法运算
+; ==========================================
+demo_add:
+    PUSH R7
+    LOADIMM R7, 100
+    LOADIMM R0, 5
+    LOADIMM R1, 3
+    ADD R2, R0, R1
+    POP R7
+    RET
+
+; ==========================================
+; 字符串复制函数
+; 输入: R3 = 源地址
+; 输出: (无)
+; ==========================================
+copy_string:
+    PUSH R4
+    PUSH R5
+    LOADIMM R4, 0          ; R4 = 0 (计数器)
+copy_loop:
+    LOAD R5, R3            ; R5 = [R3]
+    CMP R5, R4
+    JE copy_done
+    ADD R3, R3, R4         ; R3++
+    JMP copy_loop
+copy_done:
+    POP R5
+    POP R4
+    RET
+
+; ==========================================
+; 字节码生成演示
+; ==========================================
+generate_bytecode_demo:
+    PUSH R7
+    LOADIMM R7, output_buf
+    
+    ; 生成 LOADIMM R0, 42
+    LOADIMM R0, 0x12       ; opcode
+    STORE R7, R0
+    ADD R7, R7, R1
+    
+    LOADIMM R0, 0          ; reg R0
+    STORE R7, R0
+    ADD R7, R7, R1
+    
+    LOADIMM R0, 42         ; imm value
+    STORE R7, R0
+    ADD R7, R7, R1
+    
+    ; 生成 HALT
+    LOADIMM R0, 0x01
+    STORE R7, R0
+    
+    POP R7
+    RET
+
+; ==========================================
+; 比较和条件跳转演示
+; ==========================================
+compare_demo:
+    LOADIMM R0, 10
+    LOADIMM R1, 20
+    CMP R0, R1
+    JG greater
+    ; R0 <= R1 时执行
+    LOADIMM R2, 0
+    JMP done
+greater:
+    ; R0 > R1 时执行
+    LOADIMM R2, 1
+done:
+    PRINT R2
+    RET
+
+; ==========================================
+; 循环演示
+; ==========================================
+loop_demo:
+    LOADIMM R0, 0          ; i = 0
+    LOADIMM R1, 5          ; 循环次数
+loop_start:
+    CMP R0, R1
+    JGE loop_end
+    PRINT R0
+    LOADIMM R2, 1
+    ADD R0, R0, R2         ; i++
+    JMP loop_start
+loop_end:
+    RET
+
+; ==========================================
+; 斐波那契数列演示
+; ==========================================
+fib_demo:
+    LOADIMM R0, 0          ; fib[0]
+    LOADIMM R1, 1          ; fib[1]
+    PRINT R0
+    PRINT R1
+    
+    LOADIMM R2, 8          ; 输出8次
+    LOADIMM R3, 2          ; 计数器
+fib_loop:
+    CMP R3, R2
+    JG fib_done
+    ADD R4, R0, R1         ; tmp = a + b
+    MOV R0, R1             ; a = b
+    MOV R1, R4             ; b = tmp
+    PRINT R1
+    LOADIMM R4, 1
+    ADD R3, R3, R4         ; count++
+    JMP fib_loop
+fib_done:
+    RET
+
+; ==========================================
+; 阶乘计算演示
+; ==========================================
+factorial_demo:
+    LOADIMM R0, 5          ; 计算5!
+    CALL fact_func
+    PRINT R0
+    RET
+
+; R0 = 输入n, 返回 n!
+fact_func:
+    PUSH R7
+    LOADIMM R7, 1
+    CMP R0, R7
+    JNE fact_recursive
+    LOADIMM R0, 1          ; 0! = 1, 1! = 1
+    POP R7
+    RET
+fact_recursive:
+    PUSH R0                ; 保存n
+    LOADIMM R1, 1
+    SUB R0, R0, R1         ; n-1
+    CALL fact_func        ; fact(n-1)
+    POP R1                 ; 恢复n
+    MUL R0, R0, R1         ; n * fact(n-1)
+    POP R7
+    RET
+
+; ==========================================
+; 字符串常量
+; ==========================================
+.SECTION .rodata
+
+str_compiler_ready:
+.STR "FSG Compiler v0.1 - Bootstrap Ready!"
+.STR ""
+
+str_hello:
+.STR "Hello from FSG Compiler!"
+
+str_test:
+.STR "Test:"
+
+input_str:
+.STR "LOADIMM R0, 42\0"
+
+output_buf:
+.DW 0, 0, 0, 0, 0, 0, 0, 0
+.DW 0, 0, 0, 0, 0, 0, 0, 0
+.DW 0, 0, 0, 0, 0, 0, 0, 0
+.DW 0, 0, 0, 0, 0, 0, 0, 0
