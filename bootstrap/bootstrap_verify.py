@@ -9,68 +9,73 @@ Bootstrap Verification Test for FSG Assembler
 3. 比较结果
 """
 
-import sys
 import os
+import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.simple_vm import Assembler, FSGVM
+from src.simple_vm import FSGVM, Assembler  # noqa: E402
+
 
 def test_assembler_compile():
     """测试assembler.fsg的编译"""
     print("=" * 50)
     print("测试1: 编译 assembler.fsg")
     print("=" * 50)
-    
-    asm_path = os.path.join(os.path.dirname(__file__), '..', 'examples', 'assembler.fsg')
-    with open(asm_path, 'r', encoding='utf-8') as f:
+
+    asm_path = os.path.join(
+        os.path.dirname(__file__), "..", "examples", "assembler.fsg"
+    )
+    with open(asm_path, "r", encoding="utf-8") as f:
         source = f.read()
-    
+
     asm = Assembler()
     bytecode = asm.assemble(source)
-    
-    out_path = os.path.join(os.path.dirname(__file__), 'assembler.fsgb')
-    with open(out_path, 'wb') as f:
+
+    out_path = os.path.join(os.path.dirname(__file__), "assembler.fsgb")
+    with open(out_path, "wb") as f:
         f.write(bytecode)
-    
+
     print(f"✓ 编译成功! 字节码大小: {len(bytecode)} bytes")
     print(f"✓ 标签表: {asm.labels}")
     return bytecode
+
 
 def test_assembler_run(bytecode):
     """测试assembler.fsgb的运行"""
     print("\n" + "=" * 50)
     print("测试2: 运行 assembler.fsgb")
     print("=" * 50)
-    
+
     vm = FSGVM()
     vm.load_bytecode(bytecode)
-    
+
     print("输出:")
     vm.run()
     print()  # 换行
     print("✓ 运行成功!")
+
 
 def test_bootstrap_programs():
     """测试其他FSG程序的编译和运行"""
     print("\n" + "=" * 50)
     print("测试3: 编译并运行其他FSG程序")
     print("=" * 50)
-    
-    test_files = ['bootstrap_test.fsg', 'hello.fsg']
-    
-    examples_dir = os.path.join(os.path.dirname(__file__), '..', 'examples')
+
+    test_files = ["bootstrap_test.fsg", "hello.fsg"]
+
+    examples_dir = os.path.join(os.path.dirname(__file__), "..", "examples")
     for fsg_file in test_files:
         full_path = os.path.join(examples_dir, fsg_file)
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with open(full_path, "r", encoding="utf-8") as f:
                 source = f.read()
-            
+
             print(f"\n编译 {fsg_file}:")
             asm = Assembler()
             bytecode = asm.assemble(source)
             print(f"✓ 编译成功! 大小: {len(bytecode)} bytes")
-            
+
             vm = FSGVM()
             vm.load_bytecode(bytecode)
             print("运行结果: ", end="")
@@ -81,20 +86,21 @@ def test_bootstrap_programs():
         except Exception as e:
             print(f"✗ 错误: {e}")
 
+
 def main():
     print("=" * 50)
     print("FSG汇编器自举验证测试")
     print("=" * 50)
-    
+
     # 测试1: 编译
     bytecode = test_assembler_compile()
-    
+
     # 测试2: 运行
     test_assembler_run(bytecode)
-    
+
     # 测试3: 自举验证
     test_bootstrap_programs()
-    
+
     print("\n" + "=" * 50)
     print("自举验证完成!")
     print("=" * 50)
@@ -103,5 +109,6 @@ def main():
     print("- assembler.fsgb (字节码) 可运行")
     print("- 标签引用、字符串输出正常工作")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
