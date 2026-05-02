@@ -12,11 +12,9 @@ FSG自举测试脚本 v0
 import sys
 import os
 
-# 添加FSG仓库路径
-FSG_PATH = os.path.join(os.path.dirname(__file__), '..', 'fsg-language')
-sys.path.insert(0, FSG_PATH)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from simple_vm import FSGVM, Assembler
+from src.simple_vm import FSGVM, Assembler
 
 
 def test_basic_compilation():

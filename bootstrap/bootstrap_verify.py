@@ -9,8 +9,12 @@ Bootstrap Verification Test for FSG Assembler
 3. 比较结果
 """
 
-from simple_vm import Assembler, FSGVM
 import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from src.simple_vm import Assembler, FSGVM
 
 def test_assembler_compile():
     """测试assembler.fsg的编译"""

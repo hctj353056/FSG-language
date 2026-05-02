@@ -41,8 +41,8 @@ def main():
     
     print()
     print(blue("步骤1: Python编译器测试..."))
-    os.system("python3 fsg编译器1.py compile examples/hello.fsg /tmp/自举_test1.fsgb")
-    result = os.popen("python3 simple_vm.py /tmp/自举_test1.fsgb 2>&1").read().strip()
+    os.system("python3 src/fsg编译器1.py compile examples/hello.fsg /tmp/自举_test1.fsgb")
+    result = os.popen("python3 src/simple_vm.py /tmp/自举_test1.fsgb 2>&1").read().strip()
     if result == "72\n101\n108\n108\n111\n42":
         print(f"  {green('✓ 通过')} - Hello*")
     else:
@@ -50,8 +50,8 @@ def main():
     
     print()
     print(blue("步骤2: FSG汇编编译器自举..."))
-    os.system("python3 fsg编译器1.py compile fsg编译器2_中文版.fsg fsg编译器_自举版.fsgb")
-    result = os.popen("python3 simple_vm.py fsg编译器_自举版.fsgb 2>&1").read().strip()
+    os.system("python3 src/fsg编译器1.py compile examples/fsg编译器2_中文版.fsg fsg编译器_自举版.fsgb")
+    result = os.popen("python3 src/simple_vm.py fsg编译器_自举版.fsgb 2>&1").read().strip()
     expected = "70\n83\n71\n32\n118\n51\n46\n48\n42\n1\n2\n3\n4\n5\n42"
     if result == expected:
         print(f"  {green('✓ 通过')} - FSG v3.0*12345*")

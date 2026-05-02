@@ -18,52 +18,59 @@ FSG（蜉熵阁汇编语言）是一个实验性的自举编译器项目，目�
 
 ```bash
 # 使用Python编译器
-python3 fsg编译器1.py examples/hello.fsg
+python3 src/fsg编译器1.py examples/hello.fsg
 
 # 使用内置命令编译到文件
-python3 fsg编译器1.py compile examples/hello.fsg output.fsgb
+python3 src/fsg编译器1.py compile examples/hello.fsg output.fsgb
 ```
 
 ### 运行编译产物
 
 ```bash
-python3 simple_vm.py output.fsgb
+python3 src/simple_vm.py output.fsgb
 ```
 
 ### 自举验证
 
 ```bash
-python3 fsg编译器1.py bootstrap
+python3 src/fsg编译器1.py bootstrap
 
 # 或使用验证脚本
-python3 自举验证.py
+python3 bootstrap/自举验证.py
 ```
 
 ## 项目结构
 
 ```
 FSG-language/
-├── simple_vm.py              # Python虚拟机 (Stage 0)
-├── fsg编译器1.py             # Python编译器 (Stage 1)
-├── fsg编译器2_中文版.fsg     # FSG汇编编译器 (Stage 2)
-├── fsg编译器_自举版.fsgb     # 自举产物 (Stage 3)
-├── 自举验证.py               # 自举验证脚本
-├── fsg_lexer.py              # 词法分析器
-├── fsg_ir.py                 # 中间表示
-├── interpreter.py            # 解释器
-├── examples/                 # 示例程序
-│   ├── hello.fsg             # Hello World示例
-│   ├── factorial.fsg         # 阶乘计算
-│   ├── fib.fsg               # 斐波那契数列
-│   └── bubblesort.fsg        # 冒泡排序
-├── 早期符语/                  # 早期实验代码
-│   └── 符语.py
-└── docs/                     # 文档目录
-    ├── FSG中文关键字.md      # 关键字参考
-    ├── FSG语言双层词表规范.md
-    ├── assembler_spec.md     # 汇编规格
-    ├── bytecode_format.md    # 字节码格式
-    └── vm_instruction_set.md # 虚拟机指令集
+├── src/                       # 核心源码
+│   ├── simple_vm.py           # Python虚拟机 (Stage 0)
+│   ├── fsg编译器1.py          # Python编译器 (Stage 1)
+│   ├── fsg_lexer.py           # 词法分析器
+│   ├── fsg_ir.py              # 中间表示
+│   └── interpreter.py         # 解释器
+├── bootstrap/                 # 自举相关
+│   ├── 自举验证.py            # 自举验证脚本
+│   ├── bootstrap_test_v0.py   # 自举测试
+│   ├── bootstrap_verify.py    # 汇编器验证
+│   ├── bootstrap_analysis.md  # 自举分析
+│   └── bootstrap_result.md    # 自举结果
+├── docs/                      # 文档目录
+│   ├── FSG中文关键字.md       # 关键字参考
+│   ├── FSG语言双层词表规范.md
+│   ├── assembler_spec.md      # 汇编规格
+│   ├── bytecode_format.md     # 字节码格式
+│   ├── min_compiler_spec.md   # 最小编译器规格
+│   ├── vm_instruction_set.md  # 虚拟机指令集
+│   └── MEMORY.md              # 内存模型
+├── examples/                  # 示例程序
+│   ├── hello.fsg              # Hello World示例
+│   ├── factorial.fsg          # 阶乘计算
+│   ├── fib.fsg                # 斐波那契数列
+│   ├── bubblesort.fsg         # 冒泡排序
+│   └── fsg编译器2_中文版.fsg  # FSG汇编编译器 (Stage 2)
+└── 早期符语/                  # 早期实验代码
+    └── 符语.py
 ```
 
 ## 自举流程
