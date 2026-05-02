@@ -22,13 +22,15 @@ def test_assembler_compile():
     print("测试1: 编译 assembler.fsg")
     print("=" * 50)
     
-    with open('assembler.fsg', 'r') as f:
+    asm_path = os.path.join(os.path.dirname(__file__), '..', 'examples', 'assembler.fsg')
+    with open(asm_path, 'r', encoding='utf-8') as f:
         source = f.read()
     
     asm = Assembler()
     bytecode = asm.assemble(source)
     
-    with open('assembler.fsgb', 'wb') as f:
+    out_path = os.path.join(os.path.dirname(__file__), 'assembler.fsgb')
+    with open(out_path, 'wb') as f:
         f.write(bytecode)
     
     print(f"✓ 编译成功! 字节码大小: {len(bytecode)} bytes")
@@ -55,11 +57,13 @@ def test_bootstrap_programs():
     print("测试3: 编译并运行其他FSG程序")
     print("=" * 50)
     
-    test_files = ['bootstrap_test.fsg', 'examples/hello.fsg']
+    test_files = ['bootstrap_test.fsg', 'hello.fsg']
     
+    examples_dir = os.path.join(os.path.dirname(__file__), '..', 'examples')
     for fsg_file in test_files:
+        full_path = os.path.join(examples_dir, fsg_file)
         try:
-            with open(fsg_file, 'r') as f:
+            with open(full_path, 'r', encoding='utf-8') as f:
                 source = f.read()
             
             print(f"\n编译 {fsg_file}:")

@@ -148,13 +148,13 @@ def test_compiler_v0():
     print("测试5: compiler_v0.fsg 编译与执行")
     print("=" * 50)
     
-    compiler_path = os.path.join(os.path.dirname(__file__), 'compiler_v0.fsg')
+    compiler_path = os.path.join(os.path.dirname(__file__), '..', 'examples', 'compiler_v0.fsg')
     
     if not os.path.exists(compiler_path):
         print(f"❌ 文件不存在: {compiler_path}")
         return False
     
-    with open(compiler_path, 'r') as f:
+    with open(compiler_path, 'r', encoding='utf-8') as f:
         source = f.read()
     
     assembler = Assembler()
@@ -196,13 +196,13 @@ def test_self_compilation():
     # Stage0 (Python汇编器) 能编译 Stage1 (compiler_v0.fsg)
     # Stage1 自举需要更完整的汇编器
     
-    compiler_path = os.path.join(os.path.dirname(__file__), 'compiler_v0.fsg')
+    compiler_path = os.path.join(os.path.dirname(__file__), '..', 'examples', 'compiler_v0.fsg')
     
     if not os.path.exists(compiler_path):
         print(f"❌ 文件不存在: {compiler_path}")
         return False
     
-    with open(compiler_path, 'r') as f:
+    with open(compiler_path, 'r', encoding='utf-8') as f:
         source = f.read()
     
     print("Stage 0 (Python汇编器) 编译 Stage 1 (compiler_v0.fsg):")
