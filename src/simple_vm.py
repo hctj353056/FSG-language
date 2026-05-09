@@ -1120,8 +1120,7 @@ class FSGVM:
 
     def _truncate_to_i32(self, value: int) -> int:
         """将值截断到 32 位有符号整数范围"""
-        value = value & 0xFFFFFFFF
-        return value - 0x100000000 if value & 0x80000000 else value
+        return (value & 0xFFFFFFFF) - (0x100000000 if value & 0x80000000 else 0)
 
     def _detect_overflow(self, result: int) -> bool:
         """检测是否发生 32 位有符号整数溢出"""
