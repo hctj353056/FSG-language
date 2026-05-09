@@ -898,10 +898,11 @@ class FSGVM:
         ra = self._read_reg()
         rb = self._read_reg()
         result = self.state.registers[ra] + self.state.registers[rb]
-        self.state.registers[rd] = result
+        truncated = self._truncate_to_i32(result)
+        self.state.registers[rd] = truncated
         self._update_flags(result)
         if self.debug:
-            print(f"ADD R{rd}, R{ra}, R{rb} = {result}")
+            print(f"ADD R{rd}, R{ra}, R{rb} = {truncated}")
 
     def _op_sub(self):
         """SUB Rd, Ra, Rb"""
@@ -909,10 +910,11 @@ class FSGVM:
         ra = self._read_reg()
         rb = self._read_reg()
         result = self.state.registers[ra] - self.state.registers[rb]
-        self.state.registers[rd] = result
+        truncated = self._truncate_to_i32(result)
+        self.state.registers[rd] = truncated
         self._update_flags(result)
         if self.debug:
-            print(f"SUB R{rd}, R{ra}, R{rb} = {result}")
+            print(f"SUB R{rd}, R{ra}, R{rb} = {truncated}")
 
     def _op_mul(self):
         """MUL Rd, Ra, Rb"""
@@ -920,10 +922,11 @@ class FSGVM:
         ra = self._read_reg()
         rb = self._read_reg()
         result = self.state.registers[ra] * self.state.registers[rb]
-        self.state.registers[rd] = result
+        truncated = self._truncate_to_i32(result)
+        self.state.registers[rd] = truncated
         self._update_flags(result)
         if self.debug:
-            print(f"MUL R{rd}, R{ra}, R{rb} = {result}")
+            print(f"MUL R{rd}, R{ra}, R{rb} = {truncated}")
 
     def _op_div(self):
         """DIV Rd, Ra, Rb"""
@@ -932,34 +935,46 @@ class FSGVM:
         rb = self._read_reg()
         if self.state.registers[rb] == 0:
             self.state.cf = True
+            self.state.registers[rd] = 0
             if self.debug:
                 print(f"DIV R{rd}, R{ra}, R{rb} - DIV BY ZERO")
             return
         result = self.state.registers[ra] // self.state.registers[rb]
-        self.state.registers[rd] = result
+        truncated = self._truncate_to_i32(result)
+        self.state.registers[rd] = truncated
+        self.state.cf = False
         self._update_flags(result)
         if self.debug:
-            print(f"DIV R{rd}, R{ra}, R{rb} = {result}")
+            print(f"DIV R{rd}, R{ra}, R{rb} = {truncated}")
 
     def _op_neg(self):
         """NEG R"""
         reg = self._read_reg()
-        self.state.registers[reg] = -self.state.registers[reg]
-        self._update_flags(self.state.registers[reg])
+        result = -self.state.registers[reg]
+        truncated = self._truncate_to_i32(result)
+        self.state.registers[reg] = truncated
+        self._update_flags(result)
         if self.debug:
-            print(f"NEG R{reg} = {self.state.registers[reg]}")
+            print(f"NEG R{reg} = {truncated}")
 
     def _op_mod(self):
         """MOD Rd, Ra, Rb"""
         rd = self._read_reg()
         ra = self._read_reg()
         rb = self._read_reg()
-        if self.state.registers[rb] != 0:
-            result = self.state.registers[ra] % self.state.registers[rb]
-            self.state.registers[rd] = result
-            self._update_flags(result)
+        if self.state.registers[rb] == 0:
+            self.state.cf = True
+            self.state.registers[rd] = 0
             if self.debug:
-                print(f"MOD R{rd}, R{ra}, R{rb} = {result}")
+                print(f"MOD R{rd}, R{ra}, R{rb} - DIV BY ZERO")
+            return
+        result = self.state.registers[ra] % self.state.registers[rb]
+        truncated = self._truncate_to_i32(result)
+        self.state.registers[rd] = truncated
+        self.state.cf = False
+        self._update_flags(result)
+        if self.debug:
+            print(f"MOD R{rd}, R{ra}, R{rb} = {truncated}")
 
     def _op_cmp(self):
         """CMP Ra, Rb"""
@@ -969,7 +984,7 @@ class FSGVM:
         self._update_flags(result)
         if self.debug:
             print(f"CMP R{ra}, R{rb}"
-                  f" -> ZF={self.state.zf}, SF={self.state.sf}")
+                  f" -> ZF={self.state.zf}, SF={self.state.sf}, OF={self.state.of}")
 
     def _resolve_label(self, label: str) -> int:
         """解析标签"""
@@ -1103,11 +1118,20 @@ class FSGVM:
         if self.debug:
             print(f"SYSCALL {func_id:02X}")
 
+    def _truncate_to_i32(self, value: int) -> int:
+        """将值截断到 32 位有符号整数范围"""
+        return (value + 2**31) % 2**32 - 2**31
+
+    def _detect_overflow(self, result: int) -> bool:
+        """检测是否发生 32 位有符号整数溢出"""
+        return result != self._truncate_to_i32(result)
+
     def _update_flags(self, result: int):
-        """更新标志位"""
-        self.state.zf = result == 0
-        self.state.sf = result < 0
-        self.state.of = result > 2**31 - 1 or result < -(2**31)
+        """更新标志位（正确检测 32 位有符号整数溢出）"""
+        truncated = self._truncate_to_i32(result)
+        self.state.zf = truncated == 0
+        self.state.sf = truncated < 0
+        self.state.of = self._detect_overflow(result)
 
 
 # ==================== REPL ====================
